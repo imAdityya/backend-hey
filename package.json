@@ -16,6 +16,7 @@
   "author": "imAdityya",
   "license": "ISC",
   "devDependencies": {
-    "nodemon": "^1.14.10"
+    "nodemon": "^1.14.10",
+    "prettier": "^3.9.10"
   }
 }
