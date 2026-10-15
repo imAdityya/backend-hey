@@ -1,0 +1,17 @@
+{
+  "name": "backend-hey",
+  "version": "1.0.0",
+  "description": "2nd backend project",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "javascript",
+    "backend",
+    "node",
+    "express"
+  ],
+  "author": "imAdityya",
+  "license": "ISC"
+}
