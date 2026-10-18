@@ -1,5 +1,5 @@
 import connectDB from './db/index.js'
-
+import {app} from "./app.js";
 import dotenv from "dotenv";
 
 dotenv.config({
@@ -19,6 +19,15 @@ connectDB()
 })
 .catch((err) => {
   console.log("MongoDB Connection Failed !!" ,err)
+})
+
+
+//just for testing
+app.get("/api/test", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "working..."
+  })
 })
 
 
