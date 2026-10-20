@@ -174,7 +174,7 @@ const logoutUser = asyncHandler( async (req, res) => {
 const refreshAccessToken = asyncHandler( async(req, res) => {
   
   const incomingRefreshToken = req.cookies?.refreshToken ||
-    req.header("Authorization")?.replace("Bearer :", "");
+    req.header("Authorization")?.replace("Bearer ", "");
 
   if(!incomingRefreshToken){
     throw new ApiError(401, "Invalid Refresh Token!")
@@ -182,8 +182,9 @@ const refreshAccessToken = asyncHandler( async(req, res) => {
 
   try {
     const decodeToken = await jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET)
+    
     const user = await User.findById(decodeToken._id);
-  
+    
     if(!user){
       throw new ApiError(401, "Invalid Refresh Token!!")
     };
@@ -210,6 +211,7 @@ const refreshAccessToken = asyncHandler( async(req, res) => {
                       "Something went wrong while generating refresh token!")
   }
 })
+
 export {
   registerUser,
   loginUser,
