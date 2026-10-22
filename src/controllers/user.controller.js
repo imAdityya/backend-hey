@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from '../utils/ApiError.js';
 import { User } from '../models/user.model.js';
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { uploadOnCloudinary, deleteCloudinaryFile } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 
@@ -71,6 +71,7 @@ const registerUser = asyncHandler( async (req, res) => {
   }
 
   const avatar = await uploadOnCloudinary(avatarLocalPath)
+  //console.log(avatar)
   const coverImage = await uploadOnCloudinary(coverImageLocalPath)
 
   if(!avatar){
@@ -80,7 +81,9 @@ const registerUser = asyncHandler( async (req, res) => {
   const user = await User.create({
     fullName,
     avatar: avatar.url,
+    avatarPublicId: avatar.display_name,
     coverImage: coverImage?.url || "",
+    coverImagePublicId: coverImage?.display_name,
     email,
     username: username.toLowerCase(),
     password,
@@ -156,7 +159,7 @@ const logoutUser = asyncHandler( async (req, res) => {
     await User.findByIdAndUpdate(
       req.user._id,
       {
-        $set: { refreshToken: undefined }
+        $unset: { refreshToken: 1 }
       },
       {
         new: true
@@ -282,6 +285,9 @@ const updateUserAvatar = asyncHandler( async(req, res) => {
     throw new ApiError(400, "Error while uploading avatar!")
   }
 
+  const userOldAvatarPublicId = User.findById(req.user?._id).select("avatarPublicId")
+  await deleteCloudinaryFile(userOldAvatarPublicId)
+  
   const user = await User.findByIdAndUpdate(
     req.user?._id,
     {
@@ -459,6 +465,26 @@ const getWatchHistory = asyncHandler( async(req, res) => {
   )
 })
 
+const deleteUser = asyncHandler( async(req, res) => {
+  const user = req.user?._id;
+
+  if(!user){
+    throw new ApiError(404, "user not found")
+  }
+
+  const result = await User.deleteOne({ _id: user });
+
+  return res
+  .status(200)
+  .json(
+    new ApiResponse(
+      200,
+      result,
+      "user deleted successfully"
+    )
+  )
+})
+
   export {
   registerUser,
   loginUser,
@@ -470,5 +496,6 @@ const getWatchHistory = asyncHandler( async(req, res) => {
   updateUserAvatar,
   updateUserCoverImage,
   getUserChannelProfile,
-  getWatchHistory
+  getWatchHistory,
+  deleteUser
 }
