@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from '../utils/ApiError.js';
 import { User } from '../models/user.model.js';
-import { uploadOnCloudinary, deleteCloudinaryFile } from "../utils/cloudinary.js";
+import { uploadOnCloudinary, deleteCloudinaryImage } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 
@@ -81,7 +81,7 @@ const registerUser = asyncHandler( async (req, res) => {
   const user = await User.create({
     fullName,
     avatar: avatar.url,
-    avatarPublicId: avatar.display_name,
+    avatarPublicId: avatar.public_id,
     coverImage: coverImage?.url || "",
     coverImagePublicId: coverImage?.display_name,
     email,
@@ -286,7 +286,7 @@ const updateUserAvatar = asyncHandler( async(req, res) => {
   }
 
   const userOldAvatarPublicId = User.findById(req.user?._id).select("avatarPublicId")
-  await deleteCloudinaryFile(userOldAvatarPublicId)
+  await deleteCloudinaryImage(userOldAvatarPublicId)
   
   const user = await User.findByIdAndUpdate(
     req.user?._id,
