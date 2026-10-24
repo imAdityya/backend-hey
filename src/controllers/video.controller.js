@@ -111,56 +111,47 @@ const deleteVideo = asyncHandler( async(req, res) => {
   )
 })
 
-const getAllVideos = async (req, res) => {
-  try {
-    // Get pagination parameters from the URL
-    const page = Math.max(1, parseInt(req.query.page) || 1);
-    const limit = Math.min(
-      50,
-      Math.max(1, parseInt(req.query.limit) || 10)
-    );
 
-    // Calculate how many videos to skip
-    const skip = (page - 1) * limit;
+const getAllVideos = asyncHandler( async(req, res)  => {
+  
+  const page = Math.max(1, parseInt(req.query.page) || 1);
+  const limit = Math.min(
+    50,
+    Math.max(1, req.query.limit || 10)
+  )
 
-    // Fetch videos
-    const videos = await Video.find()
-      .sort({ createdAt: -1, _id: -1 })
-      .skip(skip)
-      .limit(limit);
+  const skip = (page - 1) * limit;
 
-    // Count total videos
-    const totalVideos = await Video.countDocuments();
+  const videos = await Video.find()
+  .sort({ createdAt: -1, _id: -1})
+  .skip(skip)
+  .limit(limit)
 
-    // Calculate total pages
-    const totalPages = Math.ceil(totalVideos / limit);
-    //ceil roundup number
+  const totalVideos = await Video.countDocuments();
 
-    const data = {
-        videos,
-        pagination: {
-          currentPage: page,
-          limit,
-          totalVideos,
-          totalPages,
-          hasNextPage: page < totalPages,
-          hasPreviousPage: page > 1
-        }
-      }
-    return res.status(200).json(
-      new ApiResponse(
-        200,
-        data,
-        "video fetch successfully"
-      )
-    );
-  } catch (error) {
-    throw new ApiError(
-      500,
-      "failed to fetch video"
-    )
+  const totalPages = Math.ceil(totalVideos / limit)
+
+  const data = {
+    videos,
+    pagination: {
+      currentPage: page,
+      limit,
+      totalPages,
+      totalVideos,
+      hasNextPage: page < totalPages,
+      hasPreviousPage: page > 1
+    }
   }
-};
+
+  return res.status(200)
+  .json(
+    new ApiResponse(
+      200,
+      data,
+      "videos fetched successfully"
+    )
+  )
+})
 
 export {
   uploadVideo,
