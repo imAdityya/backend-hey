@@ -97,7 +97,7 @@ const createTweet = asyncHandler( async(req, res) => {
   //user login
   //content for tweet
 
-  const user = await User.findById(req.user._id).select("-password -refreshToken");
+  const user = await User.findById(req.user._id).select("-password -refreshToken -watchHistory");
 
   if(!user){
     throw new ApiError(401, "login to create tweet")

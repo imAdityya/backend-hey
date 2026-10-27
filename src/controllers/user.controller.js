@@ -18,7 +18,7 @@ const generateAccessAndRefreshTokens = async (userId) => {
     return {accessToken, refreshToken}
     
   } catch (error) {
-    throw new ApiError(500, "Something went wrong while generating refesh and access token")
+    throw new ApiError(500, "Something went wrong while generating refresh and access token")
   }
 }
 
@@ -89,7 +89,7 @@ const registerUser = asyncHandler( async (req, res) => {
     password,
   })
 
-  const userCreated = await User.findById(user._id).select("-password -refreshToken")
+  const userCreated = await User.findById(user._id).select("-password -refreshToken -watchHistory")
 
   if(!userCreated){
     throw new ApiError(500, "Failed to create user in db")
@@ -138,7 +138,7 @@ const loginUser = asyncHandler( async (req, res) => {
 
   const {accessToken, refreshToken} = await generateAccessAndRefreshTokens(user._id);
 
-  const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
+  const loggedInUser = await User.findById(user._id).select("-password -refreshToken -watchHistory");
 
   return res
     .status(200)
@@ -263,7 +263,7 @@ const updateAccountDetails = asyncHandler( async(req, res) => {
       }
     },
     {new: true}
-  ).select("-password ")
+  ).select("-password -refreshToken -watchHistory")
 
   return res.status(200).json(new ApiResponse(
     200,
@@ -296,7 +296,7 @@ console.log(avatarLocalPath)
       }
     },
     {new: true}
-  ).select("-password")
+  ).select("-password -refreshToken -watchHistory")
 
     //TODO: delete old image
 
