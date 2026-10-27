@@ -44,7 +44,7 @@ const registerUser = asyncHandler( async (req, res) => {
   //console.log("req.body: ", req.body)
   
   if(
-    [fullName, email, username, password].some((field) => field?.trim === "")
+    [fullName, email, username, password].some((field) => field?.trim() === "")
   ){
     throw new ApiError(400, "All fields required")
   }
@@ -278,14 +278,14 @@ const updateUserAvatar = asyncHandler( async(req, res) => {
   if(!avatarLocalPath){
     throw new ApiError(400, "Avatar must be required!")
   }
-
+console.log(avatarLocalPath)
   const avatar = await uploadOnCloudinary(avatarLocalPath);
 
   if(!avatar.url){
     throw new ApiError(400, "Error while uploading avatar!")
   }
 
-  const userOldAvatarPublicId = User.findById(req.user?._id).select("avatarPublicId")
+  const userOldAvatarPublicId = await User.findById(req.user?._id).select("avatarPublicId")
   await deleteCloudinaryImage(userOldAvatarPublicId)
   
   const user = await User.findByIdAndUpdate(

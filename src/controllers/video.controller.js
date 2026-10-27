@@ -13,37 +13,43 @@ const uploadVideo = asyncHandler( async(req, res) =>{
   if(!user){
     throw new ApiError(400, "login to upload video")
   }
-  const {title, description, isPublished} = req.body;
+  let {title, description, isPublished} = req.body;
 
   
   if(!title || !description){
     throw new ApiError(400, "All fields are required")
   }
 
-  // if(typeof isPublished !== "boolean"){
-  //   throw new ApiError(400, "isPublished accepts only Boolean value")
-  // }
+  if (typeof isPublished === "string") {
+  if (isPublished !== "true" && isPublished !== "false") {
+    throw new ApiError(400, "isPublished must be true or false");
+  }
 
+  isPublished = isPublished === "true";
+}
+
+if (typeof isPublished !== "boolean") {
+  throw new ApiError(400, "isPublished accepts only Boolean value");
+}
   const videoLocalPath = req.files?.video[0].path;
-  console.log(videoLocalPath)
+
   if(!videoLocalPath){
     throw new ApiError(404, "video path not found")
   }
 
   const thumbnailLocalPath = req.files?.thumbnail[0].path;
-  console.log(thumbnailLocalPath)
   if(!thumbnailLocalPath){
     throw new ApiError(404, "thumbnail path not found")
   }
 
   const videoFile = await uploadOnCloudinary(videoLocalPath);
-  console.log(videoFile)
+  
   if(!videoFile){
     throw new ApiError(500, "failed to upload video on cloudinary")
   }
 
   const thumbnail = await uploadOnCloudinary(thumbnailLocalPath);
-  console.log(thumbnail)
+
   if(!thumbnail){
     throw new ApiError(500, "failed to upload thumbnail on cloudinary")
   }
@@ -153,8 +159,148 @@ const getAllVideos = asyncHandler( async(req, res)  => {
   )
 })
 
+const getVideoById = asyncHandler( async(req, res) => {
+
+  //return video 
+  
+  const { videoId } = req.params;
+
+  const video = await Video.findById(videoId);
+  
+  if(!video){
+    throw new ApiError(404, "video not found, please provide valid videoId")
+  }
+
+  return res.status(200)
+  .json(
+    new ApiResponse(
+      200,
+      video,
+      "video found successfully"
+    )
+  )
+})
+
+const updateVideoDetails = asyncHandler( async(req, res) => {
+  // update video's title description isPublished thumbnail
+
+  const { videoId } = req.params;
+
+  const video = await Video.findById(videoId);
+ 
+  if(!video){
+    throw new ApiError(404, "video not found, please provide valid videoId")
+  }
+
+  if(!video.owner._id.equals(req.user._id)){
+    throw new ApiError(401, "you are not the owner of the video")
+  }
+  
+  let { title, description, isPublished } = req.body;
+  
+  if(!title && !description && !isPublished && !req.file){
+    throw new ApiError(400, "please provide at least one detail to update")
+  }
+
+  if (typeof isPublished === "string") {
+  if (isPublished !== "true" && isPublished !== "false") {
+    throw new ApiError(400, "isPublished must be true or false");
+  }
+
+  isPublished = isPublished === "true";
+}
+
+  if (typeof isPublished !== "boolean") {
+  throw new ApiError(400, "isPublished accepts only Boolean value");
+}
+
+  // let updatedDetails = [];
+  
+  if(title){
+    video.title = title
+  }
+
+  if(description){
+    video.description = description;
+  }
+
+  if(isPublished){
+    video.isPublished = isPublished
+  }
+
+  if(req.file){  
+    const thumbnailLocalPath = req.file.path;
+    if(!thumbnailLocalPath){
+    throw new ApiError(404, "thumbnail path not found")
+    }
+  
+    const newThumbnail = await uploadOnCloudinary(thumbnailLocalPath);
+
+    if(!newThumbnail){
+      throw new ApiError(500, "failed to upload thumbnail on cloudinary")
+    }
+
+    if(video.thumbnailPublicId){
+      await deleteCloudinaryImage(video.thumbnailPublicId);
+      console.log("Old thumbnail image deleted successfully")
+    }
+    video.thumbnail = newThumbnail.url;
+    video.thumbnailPublicId = newThumbnail.public_id;
+}  
+
+  await video.save();
+  
+  return res.status(200)
+  .json(
+    new ApiResponse(
+      200,
+      video,
+      "video updated successfully"
+    )
+  )
+})
+
+const togglePublishStatus = asyncHandler( async(req, res) => {
+  //req.body input Publish Status
+  //req.params videoId
+
+  const { videoId } = req.params;
+
+  const  video = await Video.findById(videoId);
+
+  if(!video.owner._id.equals(req.user._id)){
+    throw new ApiError(401, "Unauthorized access")
+  }
+
+  let { isPublished } = req.body;
+  
+
+  if(typeof isPublished !== "string" && typeof isPublished !== "boolean"){
+    throw new ApiError(400, "provide isPublished")
+  }
+  
+  if(isPublished !== "true" && isPublished !== "false" && isPublished !== true && isPublished !== false){
+      throw new ApiError(400, "isPublished must be true or false")
+    }
+
+  const publishStatus = isPublished === true || isPublished === "true";
+
+  video.isPublished = publishStatus
+
+  await video.save()
+
+  return res.status(200)
+  .json( new ApiResponse(
+    200,
+    video,
+    "publish status changed successfully"
+  ))
+})
 export {
   uploadVideo,
   deleteVideo,
-  getAllVideos
+  getAllVideos,
+  getVideoById,
+  updateVideoDetails,
+  togglePublishStatus
 }
