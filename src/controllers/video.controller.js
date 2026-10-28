@@ -117,7 +117,6 @@ const deleteVideo = asyncHandler( async(req, res) => {
   )
 })
 
-
 const getAllVideos = asyncHandler( async(req, res)  => {
   
   const page = Math.max(1, parseInt(req.query.page) || 1);
